@@ -39,7 +39,10 @@ FF_CXXFLAGS="$(xargs <<< "$FF_CXXFLAGS")"
 FF_LDFLAGS="$(xargs <<< "$FF_LDFLAGS")"
 FF_LDEXEFLAGS="$(xargs <<< "$FF_LDEXEFLAGS")"
 FF_LIBS="$(xargs <<< "$FF_LIBS")"
-
+FF_CFLAGS="${FF_CFLAGS} -Og -fno-inline -fno-omit-frame-pointer"
+echo "FF_CFLAGS:${FF_CFLAGS}"
+echo "FF_CONFIGURE:$FF_CONFIGURE"
+#exit 0
 TESTFILE="uidtestfile"
 rm -f "$TESTFILE"
 docker run --rm -v "$PWD:/uidtestdir" "$IMAGE" touch "/uidtestdir/$TESTFILE"
@@ -56,6 +59,8 @@ trap "rm -f -- '$BUILD_SCRIPT'" EXIT
 cat <<EOF >"$BUILD_SCRIPT"
     set -xe
     cd /ffbuild
+    export https_proxy=10.10.4.120:7890
+    export http_proxy=10.10.4.120:7890
     rm -rf ffmpeg prefix
 
     git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg
@@ -63,7 +68,7 @@ cat <<EOF >"$BUILD_SCRIPT"
     git checkout $GIT_BRANCH
 
     ./configure --prefix=/ffbuild/prefix --pkg-config-flags="--static" \$FFBUILD_TARGET_FLAGS $FF_CONFIGURE \
-        --extra-cflags='$FF_CFLAGS' --disable-stripping --extra-cxxflags='$FF_CXXFLAGS' \
+        --extra-cflags='$FF_CFLAGS' --disable-optimizations --enable-debug=3 --disable-stripping --extra-cxxflags='$FF_CXXFLAGS' \
         --extra-ldflags='$FF_LDFLAGS' --extra-ldexeflags='$FF_LDEXEFLAGS' --extra-libs='$FF_LIBS' \
         --extra-version="\$(date +%Y%m%d)"
     make -j\$(nproc) V=1
@@ -91,7 +96,7 @@ else
 fi
 cd -
 
-rm -rf ffbuild
+#rm -rf ffbuild
 
 if [[ -n "$GITHUB_ACTIONS" ]]; then
     echo "::set-output name=build_name::${BUILD_NAME}"
