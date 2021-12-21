@@ -57,10 +57,12 @@ cat <<EOF >"$BUILD_SCRIPT"
     set -xe
     cd /ffbuild
     rm -rf ffmpeg prefix
+    export https_proxy=10.10.4.120:7890
+    export http_proxy=10.10.4.120:7890
 
-    git clone https://github.com/FFmpeg/FFmpeg.git ffmpeg
+    git clone --branch magewell https://github.com/aogun/FFmpeg.git ffmpeg
     cd ffmpeg
-    git checkout $GIT_BRANCH
+    git checkout magewell
 
     ./configure --prefix=/ffbuild/prefix --pkg-config-flags="--static" \$FFBUILD_TARGET_FLAGS $FF_CONFIGURE \
         --extra-cflags='$FF_CFLAGS' --extra-cxxflags='$FF_CXXFLAGS' \
@@ -91,7 +93,7 @@ else
 fi
 cd -
 
-rm -rf ffbuild
+#rm -rf ffbuild
 
 if [[ -n "$GITHUB_ACTIONS" ]]; then
     echo "::set-output name=build_name::${BUILD_NAME}"
